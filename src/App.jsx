@@ -2,19 +2,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, deleteDoc } from 'firebase/firestore';
-import { Play, Square, Home as HomeIcon, Trophy, Settings as SettingsIcon, Plus, User, Bell, ChevronRight, Activity, CheckCircle, Tag } from 'lucide-react';
+import { Play, Square, Home as HomeIcon, Trophy, Settings as SettingsIcon, Plus, User, Bell, ChevronRight, Activity, CheckCircle, Tag, UserPlus } from 'lucide-react';
 
 // --- Firebase Initialization ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBaj4AVuc7CQtg3Nul3VmmWZo0ZPO5GEnQ",
-  authDomain: "reclaimwell-76297.firebaseapp.com",
-  projectId: "reclaimwell-76297",
-  storageBucket: "reclaimwell-76297.firebasestorage.app",
-  messagingSenderId: "189504031735",
-  appId: "1:189504031735:web:f81f2fb2cbfec046dcbcf2",
-  measurementId: "G-HZJ14W0SS4"
-};
-
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -32,7 +23,7 @@ export default function App() {
   const [authError, setAuthError] = useState('');
 
   // App Data State
-  const [profile, setProfile] = useState({ displayName: '', dailyGoal: 60, strictMode: false });
+  const [profile, setProfile] = useState({ displayName: '', dailyGoal: 60, strictMode: false, friends: [] });
   const [sessions, setSessions] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
 
@@ -41,6 +32,12 @@ export default function App() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [pendingSession, setPendingSession] = useState(null); // Used for category selection
   const sessionRef = useRef({ start: null, strictMode: false });
+
+  // Friend System State
+  const [friendInput, setFriendInput] = useState('');
+  const [friendMessage, setFriendMessage] = useState({ text: '', type: '' });
+  const [boardView, setBoardView] = useState('friends'); // 'friends' or 'global'
+  const myFriendCode = user?.uid ? user.uid.substring(0, 6).toUpperCase() : '';
 
   // --- Auth Setup ---
   useEffect(() => {
@@ -88,6 +85,12 @@ export default function App() {
   // --- Data Fetching ---
   useEffect(() => {
     if (!user) return;
+
+    // Ensure user is discoverable by pushing their friend code to the public board
+    setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid), {
+      friendCode: user.uid.substring(0, 6).toUpperCase(),
+      lastActive: Date.now()
+    }, { merge: true }).catch(console.error);
 
     // Fetch Profile
     const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
@@ -198,8 +201,9 @@ export default function App() {
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid), {
         displayName: profile.displayName || 'Anonymous Explorer',
         weekTotalMinutes: currentWeekTotal,
+        friendCode: myFriendCode,
         lastActive: Date.now()
-      });
+      }, { merge: true });
 
       setPendingSession(null);
       setActiveTab('home');
@@ -221,12 +225,41 @@ export default function App() {
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid), {
           displayName: updates.displayName || 'Anonymous Explorer',
           weekTotalMinutes: calculateWeekTotal(sessions),
+          friendCode: myFriendCode,
           lastActive: Date.now()
         }, { merge: true });
       }
     } catch (err) {
       console.error("Error saving profile", err);
     }
+  };
+
+  // --- Friend Logic ---
+  const handleAddFriend = () => {
+    setFriendMessage({ text: '', type: '' });
+    const code = friendInput.trim().toUpperCase();
+    if (!code) return;
+    
+    if (code === myFriendCode) {
+      setFriendMessage({ text: "You can't add yourself!", type: 'error' });
+      return;
+    }
+
+    const friend = leaderboard.find(u => u.friendCode === code);
+    if (friend) {
+      const currentFriends = profile.friends || [];
+      if (currentFriends.includes(friend.id)) {
+        setFriendMessage({ text: "Already friends with " + friend.displayName, type: 'error' });
+      } else {
+        updateProfile({ friends: [...currentFriends, friend.id] });
+        setFriendMessage({ text: "Added " + (friend.displayName || 'New Friend') + "!", type: 'success' });
+        setFriendInput('');
+      }
+    } else {
+      setFriendMessage({ text: "Friend code not found.", type: 'error' });
+    }
+    
+    setTimeout(() => setFriendMessage({ text: '', type: '' }), 3000);
   };
 
   // --- Calculations ---
@@ -548,13 +581,31 @@ export default function App() {
         {/* --- LEADERBOARD TAB --- */}
         {activeTab === 'leaderboard' && !pendingSession && (
           <div className="w-full animate-in fade-in duration-300">
-            <div className="text-center mb-8 mt-4">
-              <h2 className="text-2xl font-bold">Community Board</h2>
+            <div className="text-center mb-6 mt-4">
+              <h2 className="text-2xl font-bold">Leaderboard</h2>
               <p className="text-slate-400 text-sm mt-1">Total minutes disconnected this week</p>
             </div>
+
+            {/* Toggle Friends / Global */}
+            <div className="flex bg-slate-900 rounded-xl p-1 mb-6 border border-slate-800">
+              <button 
+                onClick={() => setBoardView('friends')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${boardView === 'friends' ? 'bg-teal-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Friends
+              </button>
+              <button 
+                onClick={() => setBoardView('global')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${boardView === 'global' ? 'bg-teal-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Global
+              </button>
+            </div>
             
-            <div className="flex flex-col gap-3">
-              {leaderboard.map((u, index) => (
+            <div className="flex flex-col gap-3 mb-8">
+              {leaderboard
+                .filter(u => boardView === 'global' || u.id === user?.uid || (profile.friends || []).includes(u.id))
+                .map((u, index) => (
                 <div key={u.id} className={`bg-slate-900 border rounded-2xl p-4 flex items-center justify-between ${u.id === user?.uid ? 'border-teal-500 shadow-[0_0_15px_-3px_rgba(20,184,166,0.2)]' : 'border-slate-800'}`}>
                   <div className="flex items-center gap-4">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-500' : index === 1 ? 'bg-slate-300/20 text-slate-300' : index === 2 ? 'bg-amber-700/20 text-amber-600' : 'bg-slate-800 text-slate-500'}`}>
@@ -562,19 +613,49 @@ export default function App() {
                     </div>
                     <div>
                       <p className="font-semibold text-slate-200 flex items-center gap-2">
-                        {u.displayName}
+                        {u.displayName || 'Anonymous Explorer'}
                         {u.id === user?.uid && <span className="bg-teal-500/20 text-teal-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">You</span>}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-lg text-white">{u.weekTotalMinutes} <span className="text-sm text-slate-400 font-medium">m</span></p>
+                    <p className="font-bold text-lg text-white">{u.weekTotalMinutes || 0} <span className="text-sm text-slate-400 font-medium">m</span></p>
                   </div>
                 </div>
               ))}
-              {leaderboard.length === 0 && (
-                <p className="text-center text-slate-500 mt-10">No activity yet this week.</p>
+              {leaderboard.filter(u => boardView === 'global' || u.id === user?.uid || (profile.friends || []).includes(u.id)).length === 0 && (
+                <p className="text-center text-slate-500 mt-6">No activity yet this week.</p>
               )}
+            </div>
+
+            {/* Add Friend Section */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-6">
+              <h4 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2"><UserPlus size={16} className="text-teal-400"/> Add a Friend</h4>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={friendInput}
+                  onChange={(e) => setFriendInput(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  placeholder="Enter 6-digit code"
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-center tracking-widest font-mono font-bold uppercase focus:outline-none focus:border-teal-500 transition-colors"
+                />
+                <button 
+                  onClick={handleAddFriend}
+                  className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 rounded-xl transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              {friendMessage.text && (
+                <p className={`text-xs mt-3 font-bold text-center ${friendMessage.type === 'error' ? 'text-red-400' : 'text-teal-400'}`}>
+                  {friendMessage.text}
+                </p>
+              )}
+              <div className="mt-4 text-center border-t border-slate-800 pt-4">
+                <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Your Friend Code</p>
+                <p className="text-xl font-mono tracking-widest font-black text-white bg-slate-950 py-2 rounded-lg border border-slate-800 border-dashed select-all">{myFriendCode}</p>
+              </div>
             </div>
           </div>
         )}
