@@ -5,15 +5,7 @@ import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, deleteDoc } 
 import { Play, Square, Home as HomeIcon, Trophy, Settings as SettingsIcon, Plus, User, Bell, ChevronRight, Activity, CheckCircle, Tag } from 'lucide-react';
 
 // --- Firebase Initialization ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBaj4AVuc7CQtg3Nul3VmmWZo0ZPO5GEnQ",
-  authDomain: "reclaimwell-76297.firebaseapp.com",
-  projectId: "reclaimwell-76297",
-  storageBucket: "reclaimwell-76297.firebasestorage.app",
-  messagingSenderId: "189504031735",
-  appId: "1:189504031735:web:f81f2fb2cbfec046dcbcf2",
-  measurementId: "G-HZJ14W0SS4"
-};
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -153,7 +145,7 @@ export default function App() {
 
   const sendNotification = (title, body) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: 'https://image.winudf.com/v2/image1/Y29tLmFyby5tb2JpbGUuZGV2X2ljb25fMTc0MjY1NjQyN18wMjQ/icon.webp?w=280&fakeurl=1&type=.webp' });
+      new Notification(title, { body, icon: '/icon-192x192.png' });
     }
   };
 
@@ -340,7 +332,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 font-sans text-slate-100">
         <div className="w-full max-w-md bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl">
           <div className="flex flex-col items-center mb-8">
-            <img src="https://image.winudf.com/v2/image1/Y29tLmFyby5tb2JpbGUuZGV2X2ljb25fMTc0MjY1NjQyN18wMjQ/icon.webp?w=280&fakeurl=1&type=.webp" alt="Logo" className="w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-teal-500/20" />
+            <img src="/icon-192x192.png" alt="Logo" className="w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-teal-500/20" />
             <h1 className="text-2xl font-black text-white">Reclaimwell</h1>
             <p className="text-slate-400 text-sm mt-1">{isSignUp ? 'Create an account to start tracking' : 'Welcome back, ready to disconnect?'}</p>
           </div>
@@ -407,7 +399,7 @@ export default function App() {
       {/* Header */}
       <div className="pt-12 pb-4 px-6 flex items-center justify-between sticky top-0 bg-slate-950/90 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
-          <img src="https://image.winudf.com/v2/image1/Y29tLmFyby5tb2JpbGUuZGV2X2ljb25fMTc0MjY1NjQyN18wMjQ/icon.webp?w=280&fakeurl=1&type=.webp" alt="Logo" className="w-8 h-8 rounded-lg" />
+          <img src="/icon-192x192.png" alt="Logo" className="w-8 h-8 rounded-lg" />
           <h1 className="text-xl font-bold tracking-tight text-white">Reclaimwell</h1>
         </div>
         <div className="flex items-center gap-2">
