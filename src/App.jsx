@@ -14,7 +14,6 @@ const firebaseConfig = {
   appId: "1:189504031735:web:f81f2fb2cbfec046dcbcf2",
   measurementId: "G-HZJ14W0SS4"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -454,9 +453,12 @@ export default function App() {
           <h1 className="text-xl font-bold tracking-tight text-white">Reclaimwell</h1>
         </div>
         <div className="flex items-center gap-2">
-           <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
-             <Bell size={16} className="text-slate-400" />
-           </div>
+           <button 
+             onClick={() => { if(!sessionStart) setActiveTab('settings'); }}
+             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${activeTab === 'settings' ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-slate-400 hover:text-teal-400'}`}
+           >
+             <SettingsIcon size={16} />
+           </button>
         </div>
       </div>
 
@@ -748,7 +750,7 @@ export default function App() {
             onClick={() => setActiveTab('session')}
             className={`flex flex-col items-center justify-center -mt-6`}
           >
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform ${activeTab === 'session' ? 'bg-teal-400 text-slate-900 scale-105 shadow-teal-500/30' : 'bg-slate-800 text-teal-400 border-4 border-slate-950'}`}>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform border-4 border-slate-950 ${activeTab === 'session' ? 'bg-teal-400 text-slate-950 scale-105 shadow-teal-500/30' : 'bg-teal-500 text-slate-950'}`}>
                <Play size={28} strokeWidth={2.5} className="ml-1" />
             </div>
             <span className={`text-[10px] font-bold mt-1 ${activeTab === 'session' ? 'text-teal-400' : 'text-slate-500'}`}>Go Aro</span>
@@ -760,14 +762,6 @@ export default function App() {
           >
             <Trophy size={24} strokeWidth={activeTab === 'leaderboard' ? 2.5 : 2} />
             <span className="text-[10px] font-semibold">Board</span>
-          </button>
-
-          <button 
-            onClick={() => { if(!sessionStart) setActiveTab('settings'); }}
-            className={`flex flex-col items-center gap-1 p-2 ${activeTab === 'settings' ? 'text-teal-400' : 'text-slate-500'}`}
-          >
-            <SettingsIcon size={24} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
-            <span className="text-[10px] font-semibold">Settings</span>
           </button>
         </div>
       </div>
