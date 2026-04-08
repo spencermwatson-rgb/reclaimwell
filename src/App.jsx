@@ -5,7 +5,16 @@ import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, deleteDoc } 
 import { Play, Square, Home as HomeIcon, Trophy, Settings as SettingsIcon, Plus, User, Bell, ChevronRight, Activity, CheckCircle, Tag, UserPlus } from 'lucide-react';
 
 // --- Firebase Initialization ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const firebaseConfig = {
+  apiKey: "AIzaSyBaj4AVuc7CQtg3Nul3VmmWZo0ZPO5GEnQ",
+  authDomain: "reclaimwell-76297.firebaseapp.com",
+  projectId: "reclaimwell-76297",
+  storageBucket: "reclaimwell-76297.firebasestorage.app",
+  messagingSenderId: "189504031735",
+  appId: "1:189504031735:web:f81f2fb2cbfec046dcbcf2",
+  measurementId: "G-HZJ14W0SS4"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
