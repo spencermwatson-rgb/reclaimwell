@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 
-/ --- Swipeable Session Item Component ---
+// --- Swipeable Session Item Component ---
 const SessionItem = ({ s, onEdit, onDelete }) => {
   const [offset, setOffset] = useState(0);
   const [startX, setStartX] = useState(0);
