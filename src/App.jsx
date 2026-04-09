@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { getFirestore, doc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, arrayUnion, addDoc } from 'firebase/firestore';
 import { Play, Square, Home as HomeIcon, Trophy, Settings as SettingsIcon, Plus, UserPlus, Bell, Activity, CheckCircle, Tag, Trash2, Edit3, X } from 'lucide-react';
 
 // --- Firebase Initialization ---
@@ -16,12 +16,7 @@ const firebaseConfig = {
 };
 
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'reclaim-app';
-
-// --- Swipeable Session Item Component ---
+/ --- Swipeable Session Item Component ---
 const SessionItem = ({ s, onEdit, onDelete }) => {
   const [offset, setOffset] = useState(0);
   const [startX, setStartX] = useState(0);
@@ -622,7 +617,7 @@ export default function App() {
           </button>
           
           <button onClick={() => setActiveTab('session')} className="flex items-center justify-center px-4">
-             <div className={`w-[76px] h-[76px] rounded-full flex items-center justify-center border-4 border-slate-950 transition-transform ${activeTab === 'session' ? 'bg-teal-400 text-slate-950 scale-105 shadow-[0_0_20px_-5px_rgba(20,184,166,0.5)]' : 'bg-teal-500 text-slate-950 hover:bg-teal-400'}`}>
+             <div className={`w-[76px] h-[76px] rounded-full flex items-center justify-center transition-transform ${activeTab === 'session' ? 'bg-teal-400 text-slate-950 scale-105 shadow-[0_0_25px_0px_rgba(20,184,166,0.6)]' : 'bg-teal-500 text-slate-950 hover:bg-teal-400'}`}>
                 <Play size={36} strokeWidth={2.5} className="ml-1" />
              </div>
           </button>
