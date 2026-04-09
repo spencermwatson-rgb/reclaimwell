@@ -15,6 +15,10 @@ const firebaseConfig = {
   measurementId: "G-HZJ14W0SS4"
 };
 
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'reclaimwell-app';
 
 // --- Swipeable Session Item Component ---
 const SessionItem = ({ s, onEdit, onDelete }) => {
