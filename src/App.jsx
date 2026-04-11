@@ -70,8 +70,31 @@ const SessionItem = ({ s, onEdit, onDelete }) => {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('home');
   const [loading, setLoading] = useState(true);
+
+  // App Data State
+  const [profile, setProfile] = useState({ displayName: '', dailyGoal: 60, strictMode: false, friends: [] });
+  const [sessions, setSessions] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
+
+  // Session State (Backed by Local Storage)
+  const [activeTab, setActiveTab] = useState(() => {
+    if (localStorage.getItem('reclaim_session_start')) return 'session';
+    return 'home';
+  });
+
+  const [sessionStart, setSessionStart] = useState(() => {
+    const saved = localStorage.getItem('reclaim_session_start');
+    return saved ? parseInt(saved, 10) : null;
+  });
+
+  const [pendingSession, setPendingSession] = useState(() => {
+    const saved = localStorage.getItem('reclaim_pending_session');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const sessionRef = useRef({ start: null, strictMode: false });
 
   // Auth State
   const [email, setEmail] = useState('');
@@ -80,17 +103,6 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authMsg, setAuthMsg] = useState('');
-
-  // App Data State
-  const [profile, setProfile] = useState({ displayName: '', dailyGoal: 60, strictMode: false, friends: [] });
-  const [sessions, setSessions] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
-
-  // Session State
-  const [sessionStart, setSessionStart] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [pendingSession, setPendingSession] = useState(null); 
-  const sessionRef = useRef({ start: null, strictMode: false });
 
   // Custom Tag & Edit State
   const [isCustomTag, setIsCustomTag] = useState(false);
@@ -158,6 +170,8 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      setSessionStart(null);
+      setPendingSession(null);
       setActiveTab('home');
     } catch (err) { console.error("Logout error", err); }
   };
@@ -192,6 +206,24 @@ export default function App() {
     return () => { unsubProfile(); unsubSessions(); unsubLeaderboard(); };
   }, [user]);
 
+  // --- Local Storage Syncing ---
+  useEffect(() => {
+    if (sessionStart) {
+      localStorage.setItem('reclaim_session_start', sessionStart.toString());
+    } else {
+      localStorage.removeItem('reclaim_session_start');
+    }
+  }, [sessionStart]);
+
+  useEffect(() => {
+    if (pendingSession) {
+      localStorage.setItem('reclaim_pending_session', JSON.stringify(pendingSession));
+    } else {
+      localStorage.removeItem('reclaim_pending_session');
+    }
+  }, [pendingSession]);
+
+
   // --- Timer Logic ---
   useEffect(() => {
     sessionRef.current = { start: sessionStart, strictMode: profile.strictMode };
@@ -200,6 +232,7 @@ export default function App() {
   useEffect(() => {
     let interval;
     if (sessionStart) {
+      setElapsedTime(Math.floor((Date.now() - sessionStart) / 1000)); // Calculate immediately to prevent 00:00 flash on load
       interval = setInterval(() => {
         setElapsedTime(Math.floor((Date.now() - sessionStart) / 1000));
       }, 1000);
